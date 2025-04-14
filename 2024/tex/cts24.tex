@@ -23,10 +23,12 @@
 \usepackage{subfigure}
 \usepackage{tikz}
 
-\usetikzlibrary{positioning, quotes}
+\usetikzlibrary{positioning, quotes, shapes}
 
 \lstset{identifierstyle=\textbf,
-        basicstyle=\ttfamily}
+        basicstyle=\ttfamily,
+        aboveskip=\smallskipamount, belowskip=\medskipamount}
+\lstloadlanguages{[ISO]C++}
 
 \renewcommand{\footrulewidth}{0.4pt}% default is 0pt
 
@@ -53,7 +55,7 @@ Universitatea Tehnică a Moldovei}}
 \title{FORMALIZATION OF DISTRIBUTED SYSTEMS WITH SEMANTIC
 INTEROPERABILITY}
 \author{Leon BRÂNZAN\thanks{Departamentul Informatică și Ingineria Sistemelor, Facultatea Calculatoare, Informatică și Microelectronică, Universitatea Tehnică a Moldovei, Chișinău, Republica Moldova} \\ \href{mailto:leon.branzan@doctorat.utm.md}{\texttt{leon.branzan@doctorat.utm.md}}}
-\date{\today}
+\date{March, 29th, 2024}
 
 
 \begin{document}
@@ -246,10 +248,42 @@ is MixT \cite{Milano}---a C++-derived transaction language for concurrent comput
 type system (and the compiler by extension) to catch incorrect formalisms. It is partially based on
 the concept of full abstraction borrowed from denotational semantics.
 
-Fig. 1 represents a language embedding designed to solve issues with concurrent mutation---the iterator in the fragment on the left can be invalidated by one thread while another is accessing its value. To combat this, a “transaction block” is introduced with the \lstinline{mixt_method} declaration. Such blocks are context-aware, which allows them to safely merge concurrent operations, ensuring
-causal consistency (see \cite{Milano}).
-
-% code example for MiXT
+Listing \ref{mixtc} represents a language embedding designed to solve issues with concurrent mutation---the iterator in the fragment on the left can be invalidated by one thread while another is accessing its value. To combat this, a “transaction block” is introduced with the \lstinline{mixt_method} declaration. Such blocks are context-aware, which allows them to safely merge concurrent operations, ensuring
+causal consistency.
+    
+\noindent\begin{minipage}[h]{.35\textwidth}
+    \begin{lstlisting}[basicstyle=\footnotesize,
+            stringstyle=\ttfamily,
+            language={[ISO]C++}, frame=single,
+            abovecaptionskip=\smallskipamount,
+            title=(a) Unsafe C++ code, label=mixtl]
+var iterator = users, 
+while (iterator.isValid()) {
+    log.append(iterator->v
+    .inbox.insert(post)),
+    iterator = iterator->next
+}
+    \end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[h]{.63\textwidth}
+    \begin{lstlisting}[basicstyle=\footnotesize,
+                stringstyle=\ttfamily,
+                language={[ISO]C++}, frame=single,
+                abovecaptionskip=\smallskipamount,
+                title=(b) Code embedded within a MixT structure, label=mixtr]
+class User {
+    Handle<set<string>>, causal, supports<insert>> inbox;
+    };
+    
+class group {
+    RemoteList<Handle<user, causal>, linearizable> users;
+    Handle<Log, eventual, supports<append>> log;
+    mixt_method(add_post) (post) mixt_captures(users, log) 
+    (...)
+};
+    \end{lstlisting}
+\end{minipage}
+\captionof{lstlisting}{\label{mixtc}MixT language embedding\cite{Milano}\\}
 
 To summarize, denotational semantics serve “to specify programming language constructs
 in as abstract and implementation-independent way as possible: in this way one may gain insight
@@ -375,7 +409,44 @@ separately and then composing the results \cite{Ahrens}. This is illustrated as 
 % functor diagram
 \begin{figure}[h]
     \begin{center}
-        
+        \subfigure{
+            \begin{tikzpicture}
+                \node [ signal,
+                        label=left:Functor F,
+                        label=above:Category C,
+                        label=below:Category D,
+                        draw, 
+                        fill=blue!15, signal to=south, anchor=west] {
+                    \vrule width 1pt height 2.5cm};
+            \end{tikzpicture}
+        }
+        \subfigure{
+            \begin{tikzpicture}[
+                    every node/.style = {text=black, minimum width = 0.5cm},
+                    every edge/.style = {draw,->},
+                    every edge quotes/.style = {auto, font=\tiny\ttfamily, text=black}]
+            \begin{scope}[node distance=0.7cm and 1cm]
+                \node (o) [text=white, fill=white] {O};
+                \node (c) [fill=white, right = of o] {Z};
+                \node (a) [fill=white, above = of o] {X};
+                \node (b) [fill=white, above = of c] {Y};
+
+                \draw (a) edge["f"]   (b);
+                \draw (a) edge["f;g"] (c);
+                \draw (b) edge["g"]   (c);
+
+                \draw [thick] (-2,-0.7) -- (2,-0.7);
+
+                \node (g) [fill=white, below = of c] {F(Y)};
+                \node (e) [fill=white, below = of g] {F(Z)};
+                \node (f) [fill=white, left = of g] {F(X)};
+
+                \draw (f) edge["F(f)"]   (g);
+                \draw (f) edge["F(f;g)"] (e);
+                \draw (g) edge["F(g)"]   (e);
+            \end{scope}
+            \end{tikzpicture}
+        }
     \end{center}
     \caption{Functor preserving commuting and composition \cite{Ahrens}.}
     \label{funct}
