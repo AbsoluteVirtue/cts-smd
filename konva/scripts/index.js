@@ -1,19 +1,34 @@
-function writeMessage(text, message) {
-  text.text(message);
+function haveIntersection(r1, r2) {
+  return !(
+    r2.x > r1.x + r1.width ||
+    r2.x + r2.width < r1.x ||
+    r2.y > r1.y + r1.height ||
+    r2.y + r2.height < r1.y
+  );
 }
 
-// first we need to create a stage
 var stage = new Konva.Stage({
   container: 'container', // id of container <div>
   width: window.innerWidth,
   height: window.innerHeight,
 });
 
-// then create layer
 var layer = new Konva.Layer();
 
+const text = new Konva.Text({
+  x: 10,
+  y: 10,
+  fontFamily: 'Calibri',
+  fontSize: 24,
+  text: '',
+  fill: 'black',
+});
+
+function writeMessage(message) {
+  text.text(message);
+}
+
 const grid = new Array();
-const edges = new Array();
 
 // const xstart = stage.width() / 2;
 // const ystart = stage.height() / 2;
@@ -25,65 +40,95 @@ const h = (rad * 1.732) / 2;
 // hypo = longer     + 3/7 * shorter
 // hypo = longer / 2 + 7/8 * shorter
 
+const circle = new Konva.Circle({
+  x: stage.width() / 2,
+  y: stage.height() / 2,
+  radius: 70,
+  fill: 'black',
+  draggable: true,
+});
+
 for (let row = 0; row < 10; row++) {
+
   for (let index = 0; index < 10; index++) {
 
     var cx = xstart + (index * (h * 2)) + (row % 2 ? h : 0);
     var cy = ystart + (row * rad * 1.5);
 
-    let l1 = new Konva.Line({
-      points: [
-        cx - (h * rad / 2) / rad, cy - (h * h) / rad,
-        cx + (h * rad / 2) / rad, cy + (h * h) / rad
-      ],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l1);
-
-    let l2 = new Konva.Line({
-      points: [
-        cx - (h * rad / 2) / rad, cy + (h * h) / rad,
-        cx + (h * rad / 2) / rad, cy - (h * h) / rad
-      ],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l2);
-
-    let l3 = new Konva.Line({ // right throughedge
-      points: [cx - h, cy + rad / 2, cx + h, cy - rad / 2],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l3);
-
-    let l4 = new Konva.Line({ // left throughedge
-      points: [cx - h, cy - rad / 2, cx + h, cy + rad / 2],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l4);
-
-    let l5 = new Konva.Line({ // horizontal
-      points: [cx - h, cy, cx + h, cy],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l5);
-
-    let l6 = new Konva.Line({ // vertical
-      points: [cx, cy - rad, cx, cy + rad],
-      stroke: 'black',
-      strokeWidth: 1,
-    });
-
-    edges.push(l6);
+    const edges = [
+      new Konva.Line({
+        points: [
+          cx - (h * rad / 2) / rad, cy - (h * h) / rad,
+          cx, cy
+        ],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({
+        points: [
+          cx, cy,
+          cx + (h * rad / 2) / rad, cy + (h * h) / rad
+        ],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({
+        points: [
+          cx - (h * rad / 2) / rad, cy + (h * h) / rad,
+          cx, cy
+        ],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({
+        points: [
+          cx, cy,
+          cx + (h * rad / 2) / rad, cy - (h * h) / rad
+        ],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // right throughedge
+        points: [cx - h, cy + rad / 2, cx, cy],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // right throughedge
+        points: [cx, cy, cx + h, cy - rad / 2],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // left throughedge
+        points: [cx - h, cy - rad / 2, cx, cy],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // left throughedge
+        points: [cx, cy, cx + h, cy + rad / 2],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // horizontal
+        points: [cx - h, cy, cx, cy],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // horizontal
+        points: [cx, cy, cx + h, cy],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // vertical
+        points: [cx, cy - rad, cx, cy],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+      new Konva.Line({ // vertical
+        points: [cx, cy, cx, cy + rad],
+        stroke: 'black',
+        strokeWidth: 1,
+      }),
+    ];
 
     let hex = new Konva.RegularPolygon({
       x: cx,
@@ -94,41 +139,48 @@ for (let row = 0; row < 10; row++) {
       stroke: 'gray',
       strokeWidth: 2,
       opacity: 0.5,
+      edg: edges,
     });
 
-    hex.on('mousedown', () => {
+    hex.on('dblclick', () => {
       hex.fill('red');
       hex.stroke('red');
-      l1.stroke('red');
-      l2.stroke('red');
-      l3.stroke('red');
-      l4.stroke('red');
-      l5.stroke('red');
-      l6.stroke('red');
+      edges.forEach((item) => {
+        item.stroke('red');
+      });
     });
 
     grid.push(hex);
-
   }
+
 }
 
 grid.forEach((item) => {
   item.on('click', () => {
     let pos = stage.getPointerPosition();
-
-    let l = new Konva.Line({
-      points: [(pos.x), (pos.y), item.x(), item.y()],
-      stroke: 'green',
-      strokeWidth: 12,
-    });
-
-    layer.add(l);
+    let points = item.getAttr('edg')[0].points();
+  
+    let x = Math.abs(pos.x - (points[0] !== item.x() ? points[0]: points[2]));
+    let y = Math.abs(pos.y - (points[1] !== item.y() ? points[1]: points[3]));
+    
+    let c = 0;
+    for (let i = 1; i < 12; i++) {
+      let d = item.getAttr('edg')[i].points();
+      let x1 = Math.abs(pos.x - (d[0] !== item.x() ? d[0]: d[2]));
+      let y1 = Math.abs(pos.y - (d[1] !== item.y() ? d[1]: d[3]));
+      if (x > x1 || y > y1) {
+        x = x1;
+        y = y1;
+        c = i;
+      }
+    }
+    item.getAttr('edg')[c].stroke('green');
+    item.getAttr('edg')[c].strokeWidth(7);
   });
 
-  layer.add(item);
-});
-
-edges.forEach((item) => {
+  item.getAttr('edg').forEach((item) => {
+    layer.add(item);
+  });
   layer.add(item);
 });
 
