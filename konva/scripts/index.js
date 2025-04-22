@@ -113,6 +113,18 @@ for (let row = 0; row < 10; row++) {
 }
 
 grid.forEach((item) => {
+  item.on('click', () => {
+    let pos = stage.getPointerPosition();
+
+    let l = new Konva.Line({
+      points: [(pos.x), (pos.y), item.x(), item.y()],
+      stroke: 'green',
+      strokeWidth: 12,
+    });
+
+    layer.add(l);
+  });
+
   layer.add(item);
 });
 
