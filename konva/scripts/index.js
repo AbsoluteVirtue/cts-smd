@@ -142,18 +142,24 @@ for (let row = 0; row < 10; row++) {
       edg: edges,
     });
 
-    hex.on('dblclick', () => {
-      hex.fill('red');
-      hex.stroke('red');
-      edges.forEach((item) => {
-        item.stroke('red');
-      });
-    });
+    // hex.on('dblclick', () => {
+    //   hex.fill('red');
+    //   hex.stroke('red');
+    //   edges.forEach((item) => {
+    //     item.stroke('red');
+    //   });
+    // });
 
     grid.push(hex);
   }
 
 }
+
+let path = new Konva.Line({
+  points: [],
+  stroke: 'green',
+  strokeWidth: 7,
+});
 
 grid.forEach((item) => {
   item.on('click', () => {
@@ -174,8 +180,13 @@ grid.forEach((item) => {
         c = i;
       }
     }
-    item.getAttr('edg')[c].stroke('green');
-    item.getAttr('edg')[c].strokeWidth(7);
+    // item.getAttr('edg')[c].stroke('green');
+    // item.getAttr('edg')[c].strokeWidth(7);
+    
+    path.points().push(...item.getAttr('edg')[c].points());
+    // path.points(item.getAttr('edg')[c].points());
+    layer.add(path);
+
   });
 
   item.getAttr('edg').forEach((item) => {
@@ -183,5 +194,6 @@ grid.forEach((item) => {
   });
   layer.add(item);
 });
+
 
 stage.add(layer);
