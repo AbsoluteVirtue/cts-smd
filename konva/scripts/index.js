@@ -8,7 +8,7 @@ function haveIntersection(r1, r2) {
 }
 
 function getRandomFloat(min, max) {
-    return Math.random() * (max - min) + min;
+	return Math.random() * (max - min) + min;
 }
 
 var stage = new Konva.Stage({
@@ -165,6 +165,21 @@ let path = new Konva.Line({
 	strokeWidth: 7,
 });
 
+function isPointOnLine(px, py, x1, y1, x2, y2, width) {
+	return distancePointFromLine(px, py, x1, y1, x2, y2, width) <= width / 2;
+}
+
+function distancePointFromLine(x0, y0, x1, y1, x2, y2) {
+	return Math.abs((x2 - x1) * (y1 - y0) - (x1 - x0) * (y2 - y1)) / Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+}
+
+function distance(x1, x2, y1, y2) {
+	var a = Math.abs(x1 - x2);
+	var b = Math.abs(y1 - y2);
+	var c = Math.sqrt((a * a) + (b * b));
+	return c;
+}
+
 grid.forEach((item) => {
 	item.on('click', () => {
 		let pos = stage.getPointerPosition();
@@ -184,14 +199,31 @@ grid.forEach((item) => {
 				c = i;
 			}
 		}
-		var len_current_path = path.points().length;
+
+		item.getAttr('edg')[c].stroke('red');
+
+		var points_candidate = item.getAttr('edg')[c].points();
 		var points_current_path = path.points();
-		var points_shadow = item.getAttr('edg')[c].points();
+
+		var len_current_path = path.points().length;
 		if (len_current_path === 0) {
-			points_current_path.push(...points_shadow);
+			points_current_path.push(...points_candidate);
 		} else {
-			x = (points_shadow[0] !== item.x()) ? points_shadow[0] : points_shadow[2];
-			y = (points_shadow[1] !== item.y()) ? points_shadow[1] : points_shadow[3];
+			let d1 = distance(
+				points_candidate[0], points_current_path[len_current_path - 2],
+				points_candidate[1], points_current_path[len_current_path - 1],
+			);
+			let d2 = distance(
+				points_candidate[2], points_current_path[len_current_path - 2],
+				points_candidate[3], points_current_path[len_current_path - 1],
+			);
+			if (d1 <= d2) {
+				x = points_candidate[0];
+				y = points_candidate[1];
+			} else {
+				x = points_candidate[2];
+				y = points_candidate[3];
+			}
 			points_current_path.push(...[
 				points_current_path[len_current_path - 2], points_current_path[len_current_path - 1],
 				x, y,
